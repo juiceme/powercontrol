@@ -6,7 +6,11 @@ SCHEDULER_APP = /home/$(USER_DIRECTORY)/.local/bin/power_scheduler.py
 CONFIG_FILE = /home/$(USER_DIRECTORY)/.local/state/power_config.json
 CONFIG_FILE_LOCATION = $(INSTALL_ROOT)/$(CONFIG_FILE)
 
-build:
+build: config_file systemd_unit
+	@cp ./scripts/* $(INSTALL_ROOT)/home/$(USER_DIRECTORY)/.local/bin/
+	tar cfz $(TARBALL) --owner=root --group=root -C $(INSTALL_ROOT) .
+
+systemd_unit:
 	@mkdir -p $(INSTALL_ROOT)/etc/systemd/system/multi-user.target.wants/
 	@ln -s /etc/systemd/system/powercontrol.service $(INSTALL_ROOT)/etc/systemd/system/multi-user.target.wants/powercontrol.service
 	@echo "[Unit]" > $(SYSTEMD_UNIT)
@@ -21,6 +25,8 @@ build:
 	@echo "[Install]" >> $(SYSTEMD_UNIT)
 	@echo "WantedBy=multi-user.target" >> $(SYSTEMD_UNIT)
 	@mkdir -p $(INSTALL_ROOT)/home/$(USER_DIRECTORY)/.local/bin/
+
+config_file:
 	@mkdir -p $(INSTALL_ROOT)/home/$(USER_DIRECTORY)/.local/state/
 	@echo "{" > $(CONFIG_FILE_LOCATION)
 	@echo "    \"url\" : \"https://api.spot-hinta.fi/TodayAndDayForward\"," >> $(CONFIG_FILE_LOCATION)
@@ -31,8 +37,6 @@ build:
 	@echo "        \"charging\" : 5.0" >> $(CONFIG_FILE_LOCATION)
 	@echo "    }" >> $(CONFIG_FILE_LOCATION)
 	@echo "}" >> $(CONFIG_FILE_LOCATION)
-	@cp ./scripts/* $(INSTALL_ROOT)/home/$(USER_DIRECTORY)/.local/bin/
-	tar cfz $(TARBALL) --owner=root --group=root -C $(INSTALL_ROOT) .
 
 clean:
 	rm -rf $(TARBALL) $(INSTALL_ROOT)
