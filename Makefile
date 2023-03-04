@@ -24,7 +24,12 @@ build:
 	@mkdir -p $(INSTALL_ROOT)/home/$(USER_DIRECTORY)/.local/state/
 	@echo "{" > $(CONFIG_FILE_LOCATION)
 	@echo "    \"url\" : \"https://api.spot-hinta.fi/TodayAndDayForward\"," >> $(CONFIG_FILE_LOCATION)
-	@echo "    \"spotfile\" : \"/home/$(USER_DIRECTORY)/.local/state/spot_price.json\"" >> $(CONFIG_FILE_LOCATION)
+	@echo "    \"spotfile\" : \"/home/$(USER_DIRECTORY)/.local/state/spot_price.json\"," >> $(CONFIG_FILE_LOCATION)
+	@echo "    \"limits\" : {" >> $(CONFIG_FILE_LOCATION)
+	@echo "        \"floor\" : 10.0," >> $(CONFIG_FILE_LOCATION)
+	@echo "        \"heat\" : 5.0," >> $(CONFIG_FILE_LOCATION)
+	@echo "        \"charging\" : 5.0" >> $(CONFIG_FILE_LOCATION)
+	@echo "    }" >> $(CONFIG_FILE_LOCATION)
 	@echo "}" >> $(CONFIG_FILE_LOCATION)
 	@cp ./scripts/* $(INSTALL_ROOT)/home/$(USER_DIRECTORY)/.local/bin/
 	tar cfz $(TARBALL) --owner=root --group=root -C $(INSTALL_ROOT) .
