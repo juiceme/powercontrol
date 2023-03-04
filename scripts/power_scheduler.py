@@ -1,6 +1,16 @@
 #!/usr/bin/python3
 
+import sys
+import json
 from apscheduler.schedulers.blocking import BlockingScheduler
+
+if len(sys.argv) != 2:
+	print("Just one argument is needed, the configuration file")
+	sys.exit()
+
+config_file = open(sys.argv[1])
+config = json.load(config_file)
+config_file.close()
 
 # Start the scheduler
 sched = BlockingScheduler()
