@@ -16,7 +16,29 @@ if len(sys.argv) != 2:
 # Start the scheduler
 sched = BlockingScheduler()
 
-def check_current_override(now, prices):
+def get_config():
+	config_file = open(sys.argv[1])
+	config = json.load(config_file)
+	config_file.close()
+	return config
+
+def get_prices(config):
+	price_file = open(config["statepath"] + "/spot_price.json")
+	prices = json.load(price_file)
+	price_file.close()
+	return prices
+
+def get_current_price(config):
+	prices = get_prices(config)
+	now = datetime.now()
+	for n in prices:
+		price = parser.parse(n["DateTime"])
+		if price.day == now.day and price.hour == now.hour:
+			return n["PriceWithTax"] * 100
+	# If the hourly price is not found, return quite high price just in case
+	return 100.0
+
+def check_current_override(now, config):
 	min_a = 100
 	min_b = 100
 	min_c = 100
@@ -25,6 +47,7 @@ def check_current_override(now, prices):
 	hour_b = 0
 	hour_c = 0
 	hour_d = 0
+	prices = get_prices(config)
 	for n in prices:
 		date = parser.parse(n["DateTime"])
 		current_price = n["PriceWithTax"]
@@ -49,63 +72,52 @@ def check_current_override(now, prices):
 	return False
 
 def powercontrol_job():
-	config_file = open(sys.argv[1])
-	config = json.load(config_file)
-	config_file.close()
-	price_file = open(config["statepath"] + "/spot_price.json")
-	prices = json.load(price_file)
-	price_file.close()
+	config = get_config()
+	current_price = get_current_price(config)
 	now = datetime.now()
-	for n in prices:
-		price = parser.parse(n["DateTime"])
-		if price.day == now.day and price.hour == now.hour:
-			current_price = n["PriceWithTax"] * 100
-			print(now, end ="   ")
-			print(current_price, end ="   ")
-			if current_price < config['limits']['heat']:
-				print(" [Heat --> ON]  ", end ="")
-				os.system(config["binpath"] + "/fighter_on.sh")
-			else:
-				if check_current_override(now, prices):
-					print(" [Heat --> OVERRIDE]  ", end ="")
-					os.system(config["binpath"] + "/fighter_on.sh")
-				else:
-					print(" [Heat --> OFF] ", end ="")
-					os.system(config["binpath"] + "/fighter_off.sh")
-			if current_price < config['limits']['floor']:
-				print(" [Floor --> ON]  ", end ="")
-				os.system(config["binpath"] + "/floor_on.sh")
-			else:
-				print(" [Floor --> OFF] ", end ="")
-				os.system(config["binpath"] + "/floor_off.sh")
-			if current_price < config['limits']['charging']:
-				print(" [Charging --> ON]")
-				os.system(config["binpath"] + "/charging_on.sh")
-			else:
-				print(" [Charging --> OFF]")
-				os.system(config["binpath"] + "/charging_off.sh")
+	print(now, end ="   ")
+	print(current_price, end ="   ")
+	if current_price < config['limits']['heat']:
+		print(" [Heat --> ON]  ", end ="")
+		os.system(config["binpath"] + "/fighter_on.sh")
+	else:
+		if check_current_override(now, config):
+			print(" [Heat --> OVERRIDE]  ", end ="")
+			os.system(config["binpath"] + "/fighter_on.sh")
+		else:
+			print(" [Heat --> OFF] ", end ="")
+			os.system(config["binpath"] + "/fighter_off.sh")
+	if current_price < config['limits']['floor']:
+		print(" [Floor --> ON]  ", end ="")
+		os.system(config["binpath"] + "/floor_on.sh")
+	else:
+		print(" [Floor --> OFF] ", end ="")
+		os.system(config["binpath"] + "/floor_off.sh")
+	if current_price < config['limits']['charging']:
+		print(" [Charging --> ON]")
+		os.system(config["binpath"] + "/charging_on.sh")
+	else:
+		print(" [Charging --> OFF]")
+		os.system(config["binpath"] + "/charging_off.sh")
 
 def fetch_spot_job():
-	config_file = open(sys.argv[1])
-	config = json.load(config_file)
-	config_file.close()
-
+	config = get_config()
 	log_file = open(config["statepath"] + "/logfile", "a")
 	log_file.write(str(datetime.now()))
 	log_file.write(" [Fetching spotfile]\n")
 	log_file.close()
-
 	spot_prices_url = urlopen(config["url"])
 	data = json.loads(spot_prices_url.read())
-
 	if len(data) > 10:
 		with open(config["statepath"] + "/spot_price.json", "w") as outfile:
 			json.dump(data, outfile)
 		outfile.close()
 
 def logger_job():
+	config = get_config()
 	log_file = open(config["statepath"] + "/logfile", "a")
 	log_file.write(str(datetime.now()))
+	log_file.write("  " + str(get_current_price(config)))
 	if os.path.exists(config["statepath"] + "/fighter_on"):
 		log_file.write(" [Heat --> ON]  ")
 	else:
@@ -127,7 +139,7 @@ sched.add_job(powercontrol_job, 'cron', minute='0-59')
 sched.add_job(fetch_spot_job, 'cron', hour='17', minute='17')
 
 # Schedule the logger job to run once per hour
-sched.add_job(logger_job, 'cron', hour='0-23')
+sched.add_job(logger_job, 'cron', hour='0-23', minute='1')
 
 # Before starting, always fetch the spot prices once
 fetch_spot_job()
