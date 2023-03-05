@@ -1,30 +1,49 @@
 TARBALL = powercontrol.tar.gz
 INSTALL_ROOT = ./installroot
 USER_DIRECTORY = juice
-SYSTEMD_UNIT = $(INSTALL_ROOT)/etc/systemd/system/powercontrol.service
+POWERCONTROL_UNIT = $(INSTALL_ROOT)/etc/systemd/system/powercontrol.service
+WEBFRONT_UNIT = $(INSTALL_ROOT)/etc/systemd/system/webfront.service
 SCHEDULER_APP = /home/$(USER_DIRECTORY)/.local/bin/power_scheduler.py
+WEBFRONT_APP = /home/$(USER_DIRECTORY)/.local/bin/webfront.py
 CONFIG_FILE = /home/$(USER_DIRECTORY)/.local/state/power_config.json
 CONFIG_FILE_LOCATION = $(INSTALL_ROOT)/$(CONFIG_FILE)
 
-build: config_file systemd_unit
+build: directories config_file systemd_units
 	@cp ./scripts/* $(INSTALL_ROOT)/home/$(USER_DIRECTORY)/.local/bin/
 	tar cfz $(TARBALL) --owner=root --group=root -C $(INSTALL_ROOT) .
 
-systemd_unit:
-	@mkdir -p $(INSTALL_ROOT)/etc/systemd/system/multi-user.target.wants/
-	@ln -s /etc/systemd/system/powercontrol.service $(INSTALL_ROOT)/etc/systemd/system/multi-user.target.wants/powercontrol.service
-	@echo "[Unit]" > $(SYSTEMD_UNIT)
-	@echo "Description=Automatic powercontrol" >> $(SYSTEMD_UNIT)
-	@echo "After=multi-user.target" >> $(SYSTEMD_UNIT)
-	@echo "" >> $(SYSTEMD_UNIT)
-	@echo "[Service]" >> $(SYSTEMD_UNIT)
-	@echo "Type=simple" >> $(SYSTEMD_UNIT)
-	@echo "Restart=always" >> $(SYSTEMD_UNIT)
-	@echo "ExecStart=/usr/bin/python3 $(SCHEDULER_APP) $(CONFIG_FILE)" >> $(SYSTEMD_UNIT)
-	@echo "" >> $(SYSTEMD_UNIT)
-	@echo "[Install]" >> $(SYSTEMD_UNIT)
-	@echo "WantedBy=multi-user.target" >> $(SYSTEMD_UNIT)
+directories:
 	@mkdir -p $(INSTALL_ROOT)/home/$(USER_DIRECTORY)/.local/bin/
+	@mkdir -p $(INSTALL_ROOT)/etc/systemd/system/multi-user.target.wants/
+
+systemd_units:
+	## install unit files
+	@ln -s /etc/systemd/system/powercontrol.service $(INSTALL_ROOT)/etc/systemd/system/multi-user.target.wants/powercontrol.service
+	@ln -s /etc/systemd/system/webfront.service $(INSTALL_ROOT)/etc/systemd/system/multi-user.target.wants/webfront.service
+	## Powercontrol unit
+	@echo "[Unit]" > $(POWERCONTROL_UNIT)
+	@echo "Description=Automatic powercontrol" >> $(POWERCONTROL_UNIT)
+	@echo "After=multi-user.target" >> $(POWERCONTROL_UNIT)
+	@echo "" >> $(POWERCONTROL_UNIT)
+	@echo "[Service]" >> $(POWERCONTROL_UNIT)
+	@echo "Type=simple" >> $(POWERCONTROL_UNIT)
+	@echo "Restart=always" >> $(POWERCONTROL_UNIT)
+	@echo "ExecStart=/usr/bin/python3 $(SCHEDULER_APP) $(CONFIG_FILE)" >> $(POWERCONTROL_UNIT)
+	@echo "" >> $(POWERCONTROL_UNIT)
+	@echo "[Install]" >> $(POWERCONTROL_UNIT)
+	@echo "WantedBy=multi-user.target" >> $(POWERCONTROL_UNIT)
+	## Webfront unit
+	@echo "[Unit]" > $(WEBFRONT_UNIT)
+	@echo "Description=Automatic powercontrol" >> $(WEBFRONT_UNIT)
+	@echo "After=multi-user.target" >> $(WEBFRONT_UNIT)
+	@echo "" >> $(WEBFRONT_UNIT)
+	@echo "[Service]" >> $(WEBFRONT_UNIT)
+	@echo "Type=simple" >> $(WEBFRONT_UNIT)
+	@echo "Restart=always" >> $(WEBFRONT_UNIT)
+	@echo "ExecStart=/usr/bin/python3 $(WEBFRONT_APP) $(CONFIG_FILE)" >> $(WEBFRONT_UNIT)
+	@echo "" >> $(WEBFRONT_UNIT)
+	@echo "[Install]" >> $(WEBFRONT_UNIT)
+	@echo "WantedBy=multi-user.target" >> $(WEBFRONT_UNIT)
 
 config_file:
 	@mkdir -p $(INSTALL_ROOT)/home/$(USER_DIRECTORY)/.local/state/
