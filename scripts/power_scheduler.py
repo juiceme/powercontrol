@@ -52,7 +52,7 @@ def powercontrol_job():
 	config_file = open(sys.argv[1])
 	config = json.load(config_file)
 	config_file.close()
-	price_file = open(config["spotfile"])
+	price_file = open(config["statepath"] + "/spot_price.json")
 	prices = json.load(price_file)
 	price_file.close()
 	now = datetime.now()
@@ -64,45 +64,70 @@ def powercontrol_job():
 			print(current_price, end ="   ")
 			if current_price < config['limits']['heat']:
 				print(" [Heat --> ON]  ", end ="")
-				os.system("/home/juice/.local/bin/fighter_on.sh")
+				os.system(config["binpath"] + "/fighter_on.sh")
 			else:
 				if check_current_override(now, prices):
 					print(" [Heat --> OVERRIDE]  ", end ="")
-					os.system("/home/juice/.local/bin/fighter_on.sh")
+					os.system(config["binpath"] + "/fighter_on.sh")
 				else:
 					print(" [Heat --> OFF] ", end ="")
-					os.system("/home/juice/.local/bin/fighter_off.sh")
+					os.system(config["binpath"] + "/fighter_off.sh")
 			if current_price < config['limits']['floor']:
 				print(" [Floor --> ON]  ", end ="")
-				os.system("/home/juice/.local/bin/floor_on.sh")
+				os.system(config["binpath"] + "/floor_on.sh")
 			else:
 				print(" [Floor --> OFF] ", end ="")
-				os.system("/home/juice/.local/bin/floor_off.sh")
+				os.system(config["binpath"] + "/floor_off.sh")
 			if current_price < config['limits']['charging']:
 				print(" [Charging --> ON]")
-				os.system("/home/juice/.local/bin/charging_on.sh")
+				os.system(config["binpath"] + "/charging_on.sh")
 			else:
 				print(" [Charging --> OFF]")
-				os.system("/home/juice/.local/bin/charging_off.sh")
+				os.system(config["binpath"] + "/charging_off.sh")
 
 def fetch_spot_job():
 	config_file = open(sys.argv[1])
 	config = json.load(config_file)
 	config_file.close()
 
+	log_file = open(config["statepath"] + "/logfile", "a")
+	log_file.write(str(datetime.now()))
+	log_file.write(" [Fetching spotfile]\n")
+	log_file.close()
+
 	spot_prices_url = urlopen(config["url"])
 	data = json.loads(spot_prices_url.read())
 
 	if len(data) > 10:
-		with open(config["spotfile"], "w") as outfile:
+		with open(config["statepath"] + "/spot_price.json", "w") as outfile:
 			json.dump(data, outfile)
 		outfile.close()
+
+def logger_job():
+	log_file = open(config["statepath"] + "/logfile", "a")
+	log_file.write(str(datetime.now()))
+	if os.path.exists(config["statepath"] + "/fighter_on"):
+		log_file.write(" [Heat --> ON]  ")
+	else:
+		log_file.write(" [Heat --> OFF] ")
+	if os.path.exists(config["statepath"] + "/floor_on"):
+		log_file.write(" [Floor --> ON]  ")
+	else:
+		log_file.write(" [Floor --> OFF] ")
+	if os.path.exists(config["statepath"] + "/charging_on"):
+		log_file.write(" [Charging --> ON]\n")
+	else:
+		log_file.write(" [Charging --> OFF]\n")
+	log_file.close()
 
 # Schedule the powercontrol job to run once each minute
 sched.add_job(powercontrol_job, 'cron', minute='0-59')
 
 # Schedule the fetch_spot job to run once per day
 sched.add_job(fetch_spot_job, 'cron', hour='17', minute='17')
+
+# Schedule the logger job to run once per hour
+sched.add_job(logger_job, 'cron', hour='0-23')
 
 # Before starting, always fetch the spot prices once
 fetch_spot_job()
