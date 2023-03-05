@@ -1,6 +1,6 @@
 TARBALL = powercontrol.tar.gz
 INSTALL_ROOT = ./installroot
-USER_DIRECTORY = juice
+USER_DIRECTORY ?= pi
 POWERCONTROL_UNIT = $(INSTALL_ROOT)/etc/systemd/system/powercontrol.service
 WEBFRONT_UNIT = $(INSTALL_ROOT)/etc/systemd/system/webfront.service
 SCHEDULER_APP = /home/$(USER_DIRECTORY)/.local/bin/power_scheduler.py
