@@ -7,6 +7,7 @@ import time
 from apscheduler.schedulers.blocking import BlockingScheduler
 from dateutil import parser
 from datetime import datetime
+from urllib.request import urlopen
 
 if len(sys.argv) != 2:
 	print("Just one argument is needed, the configuration file")
@@ -47,7 +48,7 @@ def check_current_override(now, prices):
 		return True
 	return False
 
-def scheduler_job():
+def powercontrol_job():
 	config_file = open(sys.argv[1])
 	config = json.load(config_file)
 	config_file.close()
@@ -84,7 +85,27 @@ def scheduler_job():
 				print(" [Charging --> OFF]")
 				os.system("/home/juice/.local/bin/charging_off.sh")
 
-# Schedule the job to run once each minute
-sched.add_job(scheduler_job, 'cron', minute='0-59')
-sched.start()
+def fetch_spot_job():
+	config_file = open(sys.argv[1])
+	config = json.load(config_file)
+	config_file.close()
 
+	spot_prices_url = urlopen(config["url"])
+	data = json.loads(spot_prices_url.read())
+
+	if len(data) > 10:
+		with open(config["spotfile"], "w") as outfile:
+			json.dump(data, outfile)
+		outfile.close()
+
+# Schedule the powercontrol job to run once each minute
+sched.add_job(powercontrol_job, 'cron', minute='0-59')
+
+# Schedule the fetch_spot job to run once per day
+sched.add_job(fetch_spot_job, 'cron', hour='17', minute='17')
+
+# Before starting, always fetch the spot prices once
+fetch_spot_job()
+
+# Start the cronjobs
+sched.start()
