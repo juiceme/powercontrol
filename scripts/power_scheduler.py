@@ -117,7 +117,7 @@ def logger_job():
 	config = get_config()
 	log_file = open(config["statepath"] + "/logfile", "a")
 	log_file.write(str(datetime.now()))
-	log_file.write("  " + str(get_current_price(config)))
+	log_file.write("  %.2f c/kWh " % get_current_price(config))
 	if os.path.exists(config["statepath"] + "/fighter_on"):
 		log_file.write(" [Heat --> ON]  ")
 	else:
