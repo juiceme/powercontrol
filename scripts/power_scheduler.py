@@ -96,7 +96,7 @@ class PowerControl:
 		current_price = self.get_current_price()
 		now = datetime.now()
 		print(now, end ="   ")
-		print("%.2f c/kWh   " % get_current_price(), end ="")
+		print("%.2f c/kWh   " % self.get_current_price(), end ="")
 		if current_price < self.config['limits']['heat']:
 			print(" [Heat --> ON]  ", end ="")
 			os.system(self.config["binpath"] + "/fighter_on.sh")
@@ -142,7 +142,7 @@ class PowerControl:
 		self.get_prices()
 		log_file = open(self.config["statepath"] + "/logfile", "a")
 		log_file.write(str(datetime.now()))
-		log_file.write("  %.2f c/kWh " % get_current_price())
+		log_file.write("  %.2f c/kWh " % self.get_current_price())
 		if os.path.exists(self.config["statepath"] + "/fighter_on"):
 			log_file.write(" [Heat --> ON]  ")
 		else:
