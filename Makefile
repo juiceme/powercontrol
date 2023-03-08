@@ -22,7 +22,7 @@ systemd_units:
 	@ln -s /etc/systemd/system/webfront.service $(INSTALL_ROOT)/etc/systemd/system/multi-user.target.wants/webfront.service
 	## Powercontrol unit
 	@echo "[Unit]" > $(POWERCONTROL_UNIT)
-	@echo "Description=Automatic powercontrol" >> $(POWERCONTROL_UNIT)
+	@echo "Description=Automatic powercontrol service" >> $(POWERCONTROL_UNIT)
 	@echo "After=multi-user.target" >> $(POWERCONTROL_UNIT)
 	@echo "" >> $(POWERCONTROL_UNIT)
 	@echo "[Service]" >> $(POWERCONTROL_UNIT)
@@ -34,7 +34,7 @@ systemd_units:
 	@echo "WantedBy=multi-user.target" >> $(POWERCONTROL_UNIT)
 	## Webfront unit
 	@echo "[Unit]" > $(WEBFRONT_UNIT)
-	@echo "Description=Automatic powercontrol" >> $(WEBFRONT_UNIT)
+	@echo "Description=Automatic powercontrol web frontend" >> $(WEBFRONT_UNIT)
 	@echo "After=multi-user.target" >> $(WEBFRONT_UNIT)
 	@echo "" >> $(WEBFRONT_UNIT)
 	@echo "[Service]" >> $(WEBFRONT_UNIT)
