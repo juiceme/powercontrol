@@ -21,7 +21,7 @@ def get_price():
 	config_file = open(sys.argv[1])
 	config = json.load(config_file)
 	config_file.close()
-	file = open(config["spotfile"])
+	file = open(config["statepath"] + "/spot_price.json")
 	data = json.load(file)
 	now = datetime.now()
 	price = 0
