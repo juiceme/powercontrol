@@ -91,8 +91,12 @@ def powercontrol_job():
 		print(" [Floor --> ON]  ", end ="")
 		os.system(config["binpath"] + "/floor_on.sh")
 	else:
-		print(" [Floor --> OFF] ", end ="")
-		os.system(config["binpath"] + "/floor_off.sh")
+		if check_current_override(now, config):
+			print(" [Floor --> OVERRIDE]  ", end ="")
+			os.system(config["binpath"] + "/floor_on.sh")
+		else:
+			print(" [Floor --> OFF] ", end ="")
+			os.system(config["binpath"] + "/floor_off.sh")
 	if current_price < config['limits']['charging']:
 		print(" [Charging --> ON]")
 		os.system(config["binpath"] + "/charging_on.sh")
