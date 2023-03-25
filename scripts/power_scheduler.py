@@ -48,12 +48,20 @@ class PowerControl:
 		self.prices = json.load(price_file)
 		price_file.close()
 
+	def get_seasonal_price(self, now):
+		if self.config["pricing"]["seasonal_pricing"]:
+			if now.month > 10 or now.month < 4:
+				if now.hour > 6 and now.hour < 22:
+					return self.config["pricing"]["winter_day"]
+			return self.config["pricing"]["other"]
+		return 0.0
+
 	def get_current_price(self):
 		now = datetime.now()
 		for n in self.prices:
-			price = parser.parse(n["DateTime"])
-			if price.day == now.day and price.hour == now.hour:
-				return n["PriceWithTax"] * 100
+			item = parser.parse(n["DateTime"])
+			if item.day == now.day and item.hour == now.hour:
+				return n["PriceWithTax"] * 100 + self.get_seasonal_price(now)
 			# If the hourly price is not found, return quite high price just in case
 		return 100.0
 
