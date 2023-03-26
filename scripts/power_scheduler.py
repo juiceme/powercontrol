@@ -51,8 +51,9 @@ class PowerControl:
 	def get_seasonal_price(self, now):
 		if self.config["pricing"]["seasonal_pricing"]:
 			if now.month > 10 or now.month < 4:
-				if now.hour > 6 and now.hour < 22:
-					return self.config["pricing"]["winter_day"]
+				if now.weekday() < 5:
+					if now.hour > 6 and now.hour < 22:
+						return self.config["pricing"]["winter_day"]
 			return self.config["pricing"]["other"]
 		return 0.0
 
