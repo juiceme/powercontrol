@@ -25,20 +25,33 @@ def get_price():
 	data = json.load(file)
 	now = datetime.now()
 	price = 0
+	winter_day = False
+	if config["pricing"]["seasonal_pricing"]:
+		if now.month > 10 or now.month < 4:
+			if now.weekday() < 5:
+				if now.hour > 6 and now.hour < 22:
+					price = config["pricing"]["winter_day"]
+					winter_day = True
+			price = config["pricing"]["other"]
 	for n in data:
 		dayline = parser.parse(n["DateTime"])
 		if dayline.day == now.day and dayline.hour == now.hour:
-			price = n["PriceWithTax"]
-	return price * 100
+			price = price + n["PriceWithTax"] * 100
+	return price, winter_day
 
 class MyServer(BaseHTTPRequestHandler):
 	def do_GET(self):
-		price = get_price()
+		price, winter_day = get_price()
 		self.send_response(200)
 		self.send_header("Content-type", "text/html")
 		self.end_headers()
+		if winter_day:
+			season = "Talviaika"
+		else:
+			season = "Muu aika"
 		self.wfile.write(bytes("<html><head><title>HOMECONTROL</title></head>", "utf-8"))
-		self.wfile.write(bytes("<p><p>Hinta nyt: %.2f cent/kWh<p><p>" % price, "utf-8"))
+		self.wfile.write(bytes("<p><p>Hinta nyt: %.2f cent/kWh " % price, "utf-8"))
+		self.wfile.write(bytes("(%s)<p><p>" % season, "utf-8"))
 		if os.path.exists("/home/juice/.local/state/fighter_on"):
 			self.wfile.write(bytes("<p>Boileri: ON<p>", "utf-8"))
 		else:
