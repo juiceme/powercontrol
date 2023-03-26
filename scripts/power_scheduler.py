@@ -53,18 +53,19 @@ class PowerControl:
 			if now.month > 10 or now.month < 4:
 				if now.weekday() < 5:
 					if now.hour > 6 and now.hour < 22:
-						return self.config["pricing"]["winter_day"]
-			return self.config["pricing"]["other"]
-		return 0.0
+						return self.config["pricing"]["winter_day"], True
+			return self.config["pricing"]["other"], False
+		return 0.0, False
 
 	def get_current_price(self):
 		now = datetime.now()
 		for n in self.prices:
 			item = parser.parse(n["DateTime"])
 			if item.day == now.day and item.hour == now.hour:
-				return n["PriceWithTax"] * 100 + self.get_seasonal_price(now)
+				price, winter_day = self.get_seasonal_price(now)
+				return n["PriceWithTax"] * 100 + price, winter_day
 			# If the hourly price is not found, return quite high price just in case
-		return 100.0
+		return 100.0, False
 
 	def check_current_override(self):
 		now = datetime.now()
@@ -102,10 +103,11 @@ class PowerControl:
 	def powercontrol_job(self):
 		self.get_config()
 		self.get_prices()
-		current_price = self.get_current_price()
+		current_price, winter_day = self.get_current_price()
 		now = datetime.now()
 		print(now, end ="   ")
-		print("%.2f c/kWh   " % self.get_current_price(), end ="")
+		print("%.2f c/kWh   " % current_price, end ="")
+		print("[winter day: %s]   " % winter_day, end ="")
 		if current_price < self.config['limits']['heat']:
 			print(" [Heat --> ON]  ", end ="")
 			os.system(self.config["binpath"] + "/fighter_on.sh")
@@ -149,9 +151,11 @@ class PowerControl:
 	def logger_job(self):
 		self.get_config()
 		self.get_prices()
+		current_price, winter_day = self.get_current_price()
 		log_file = open(self.config["statepath"] + "/logfile", "a")
 		log_file.write(str(datetime.now()))
-		log_file.write("  %.2f c/kWh " % self.get_current_price())
+		log_file.write("  %.2f c/kWh " % current_price)
+		log_file.write("[winter day: %s]   " % winter_day)
 		if os.path.exists(self.config["statepath"] + "/fighter_on"):
 			log_file.write(" [Heat --> ON]  ")
 		else:
