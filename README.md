@@ -14,6 +14,11 @@ The physical device is a Raspberry Pi SBC fitted with relay-control hat. The spo
     urllib
     APScheduler
 
+### Additionally the WEB frontend requires
+
+    pywebio
+    plotly
+    pandas
 
 ### Building
 
@@ -44,4 +49,3 @@ There is one configuration file, "~/.local/state/power_config.json". The default
             "charging" : 5.0                                      # Price limit for EV Charger unit [cents/kWh]
         }
     }
-
