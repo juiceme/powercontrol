@@ -48,21 +48,21 @@ systemd_units:
 config_file:
 	@mkdir -p $(INSTALL_ROOT)/home/$(USER_DIRECTORY)/.local/state/
 	@echo "{" > $(CONFIG_FILE_LOCATION)
-	@echo "    \"url\" : \"https://api.spot-hinta.fi/TodayAndDayForward\"," >> $(CONFIG_FILE_LOCATION)
-	@echo "    \"statepath\" : \"/home/$(USER_DIRECTORY)/.local/state\"," >> $(CONFIG_FILE_LOCATION)
-	@echo "    \"binpath\" : \"/home/$(USER_DIRECTORY)/.local/bin\"," >> $(CONFIG_FILE_LOCATION)
-	@echo "    \"pricing\" : {" >> $(CONFIG_FILE_LOCATION)
-	@echo "        \"seasonal_pricing\" : true," >> $(CONFIG_FILE_LOCATION)
-	@echo "        \"winter_day\" : 6.0," >> $(CONFIG_FILE_LOCATION)
-	@echo "        \"other\" : 2.0" >> $(CONFIG_FILE_LOCATION)
+	@echo "    \"url\": \"https://api.spot-hinta.fi/TodayAndDayForward\"," >> $(CONFIG_FILE_LOCATION)
+	@echo "    \"statepath\": \"/home/$(USER_DIRECTORY)/.local/state\"," >> $(CONFIG_FILE_LOCATION)
+	@echo "    \"binpath\": \"/home/$(USER_DIRECTORY)/.local/bin\"," >> $(CONFIG_FILE_LOCATION)
+	@echo "    \"password\": \"change-me\"," >> $(CONFIG_FILE_LOCATION)
+	@echo "    \"pricing\": {" >> $(CONFIG_FILE_LOCATION)
+	@echo "        \"seasonal_pricing\": true," >> $(CONFIG_FILE_LOCATION)
+	@echo "        \"winter_day\": 6.0," >> $(CONFIG_FILE_LOCATION)
+	@echo "        \"other\": 2.0" >> $(CONFIG_FILE_LOCATION)
 	@echo "    }," >> $(CONFIG_FILE_LOCATION)
-	@echo "    \"limits\" : {" >> $(CONFIG_FILE_LOCATION)
-	@echo "        \"floor\" : 12.0," >> $(CONFIG_FILE_LOCATION)
-	@echo "        \"heat\" : 8.0," >> $(CONFIG_FILE_LOCATION)
-	@echo "        \"charging\" : 6.0" >> $(CONFIG_FILE_LOCATION)
+	@echo "    \"limits\": {" >> $(CONFIG_FILE_LOCATION)
+	@echo "        \"floor\": 12.0," >> $(CONFIG_FILE_LOCATION)
+	@echo "        \"heat\": 8.0," >> $(CONFIG_FILE_LOCATION)
+	@echo "        \"charging\": 6.0" >> $(CONFIG_FILE_LOCATION)
 	@echo "    }" >> $(CONFIG_FILE_LOCATION)
 	@echo "}" >> $(CONFIG_FILE_LOCATION)
 
 clean:
 	rm -rf $(TARBALL) $(INSTALL_ROOT)
-

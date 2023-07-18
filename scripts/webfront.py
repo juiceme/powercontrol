@@ -32,6 +32,12 @@ class WebServerWidget:
                 self.config = json.load(config_file)
                 config_file.close()
 
+        def save_config(self):
+                json_stream = json.dumps(self.config, indent=4)
+                with open(self.config_file_name, "w") as outfile:
+                        outfile.write(json_stream)
+                        outfile.close()
+
         def get_prices(self):
                 price_file = open(self.config["statepath"] + "/spot_prices.json")
                 self.prices = json.load(price_file)
@@ -89,24 +95,36 @@ class WebServerWidget:
                 return floor, heat, charging
 
         def serve(self):
-                self.get_config()
-                self.get_prices()
-                price, winter_day = self.get_price_now()
-                if winter_day:
-                        season = "Talviaika"
-                else:
-                        season = "Muu aika"
-                put_text("Hinta nyt: %.2f cent/kWh (%s)" % (price, season))
-                floor, heat, charging = self.get_states()
-                put_text("lämitys: %s" % heat)
-                put_text("lattia: %s" % floor)
-                put_text("lataus: %s" % charging)
+                password = ""
+                while (True):
+                        self.get_config()
+                        self.get_prices()
+                        clear()
+                        price, winter_day = self.get_price_now()
+                        if winter_day:
+                                season = "Talviaika"
+                        else:
+                                season = "Muu aika"
+                        put_text("Hinta nyt: %.2f cent/kWh (%s)" % (price, season))
+                        floor, heat, charging = self.get_states()
+                        put_text("lämitys: %s" % heat)
+                        put_text("lattia: %s" % floor)
+                        put_text("lataus: %s" % charging)
 
-                prices, colormap, winter_day = self.get_prices_from_now()
-                graph = px.bar(prices, x="date", y="price", title='Sylvin lataus')
-                graph.update_traces(marker_color=colormap)
-                html = graph.to_html(include_plotlyjs="require", full_html=False)
-                put_html(html)
+                        prices, colormap, winter_day = self.get_prices_from_now()
+                        graph = px.bar(prices, x="date", y="price", title='Sylvin lataus')
+                        graph.update_traces(marker_color=colormap)
+                        html = graph.to_html(include_plotlyjs="require", full_html=False)
+                        put_html(html)
+
+                        level = input("Sylvin latausraja:", type=FLOAT, value=self.config["limits"]["charging"])
+                        if password == "":
+                                password = input("Salasana:", type=PASSWORD)
+                        if password == self.config["password"]:
+                                self.config["limits"]["charging"] = level
+                                self.save_config()
+                        else:
+                                password = ""
 
 if __name__ == "__main__":
         # initialize object and start service

@@ -43,6 +43,12 @@ There is one configuration file, "~/.local/state/power_config.json". The default
         "url" : "https://api.spot-hinta.fi/TodayAndDayForward",   # Where the spor prices are fetched
         "statepath" : "/home/pi/.local/state",                    # Configuration, log and state files
         "binpath" : "/home/pi/.local/bin",                        # Executables and scripts
+        "password": "change-me",                                  # Password for web frontend configuration
+        "pricing": {
+            "seasonal_pricing": true,                             # If true, take into account seasonal transfer prices
+            "winter_day": 6.0,                                    # Transfer price for winter day
+            "other": 2.0                                          # transfer price for all other times
+        },
         "limits" : {
             "floor" : 10.0,                                       # Price limit for floor heating [cents/kWh]
             "heat" : 5.0,                                         # Price limit for boiler booster [cents/kWh]
