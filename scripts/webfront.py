@@ -52,7 +52,8 @@ class WebServerWidget:
                                         if now.hour > 6 and now.hour < 22:
                                                 price = self.config["pricing"]["winter_day"]
                                                 winter_day = True
-                        price = self.config["pricing"]["other"]
+                                                return price, winter_day
+                price = self.config["pricing"]["other"]
                 return price, winter_day
 
         def get_price_now(self):
@@ -69,18 +70,18 @@ class WebServerWidget:
                 prices = []
                 colors = []
                 now = datetime.now()
-                base_price, winter_day = self.get_winter_day(now)
                 for n in self.prices:
                         dayline = parser.parse(n["DateTime"])
                         charging = "lightslategray"
                         if (dayline.day == now.day and dayline.hour >= now.hour) or dayline.day > now.day or dayline.month > now.month:
+                                base_price, winter_day = self.get_winter_day(dayline)
                                 price = base_price + n["PriceWithTax"] * 100
                                 if price <= self.config["limits"]["charging"]:
                                         charging = "lime"
                                 prices.append({"date" : dayline,
                                                "price" : price})
                                 colors.append(charging)
-                return prices, colors, winter_day
+                return prices, colors
 
         def get_states(self):
                 floor = "OFF"
@@ -111,7 +112,7 @@ class WebServerWidget:
                         put_text("lattia: %s" % floor)
                         put_text("lataus: %s" % charging)
 
-                        prices, colormap, winter_day = self.get_prices_from_now()
+                        prices, colormap = self.get_prices_from_now()
                         graph = px.bar(prices, x="date", y="price", title='Sylvin lataus')
                         graph.update_traces(marker_color=colormap)
                         html = graph.to_html(include_plotlyjs="require", full_html=False)
