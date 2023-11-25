@@ -48,7 +48,7 @@ class WebServerWidget:
                 winter_day = False
                 if self.config["pricing"]["seasonal_pricing"]:
                         if now.month > 10 or now.month < 4:
-                                if now.weekday() < 5:
+                                if now.weekday() < 6:
                                         if now.hour > 6 and now.hour < 22:
                                                 price = self.config["pricing"]["winter_day"]
                                                 winter_day = True
