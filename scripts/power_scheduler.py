@@ -68,6 +68,8 @@ class PowerControl:
 		return 100.0, False
 
 	def check_current_override(self):
+		if self.config['override'] == False:
+			return False
 		now = datetime.now()
 		min_a = 100
 		min_b = 100

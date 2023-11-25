@@ -52,6 +52,7 @@ config_file:
 	@echo "    \"statepath\": \"/home/$(USER_DIRECTORY)/.local/state\"," >> $(CONFIG_FILE_LOCATION)
 	@echo "    \"binpath\": \"/home/$(USER_DIRECTORY)/.local/bin\"," >> $(CONFIG_FILE_LOCATION)
 	@echo "    \"password\": \"change-me\"," >> $(CONFIG_FILE_LOCATION)
+	@echo "    \"override\": false," >> $(CONFIG_FILE_LOCATION)
 	@echo "    \"pricing\": {" >> $(CONFIG_FILE_LOCATION)
 	@echo "        \"seasonal_pricing\": true," >> $(CONFIG_FILE_LOCATION)
 	@echo "        \"winter_day\": 6.0," >> $(CONFIG_FILE_LOCATION)

@@ -44,6 +44,7 @@ There is one configuration file, "~/.local/state/power_config.json". The default
         "statepath" : "/home/pi/.local/state",                    # Configuration, log and state files
         "binpath" : "/home/pi/.local/bin",                        # Executables and scripts
         "password": "change-me",                                  # Password for web frontend configuration
+        "override": false,                                        # Use override for the lowest hour per 6h period.
         "pricing": {
             "seasonal_pricing": true,                             # If true, take into account seasonal transfer prices
             "winter_day": 6.0,                                    # Transfer price for winter day
