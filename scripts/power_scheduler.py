@@ -4,9 +4,11 @@ import os
 import sys
 import json
 import time
+import pytz
 from apscheduler.schedulers.blocking import BlockingScheduler
 from dateutil import parser
 from datetime import datetime
+from datetime import timedelta
 from urllib.request import urlopen
 
 if len(sys.argv) != 2:
@@ -30,7 +32,7 @@ class PowerControl:
 		self.sched.add_job(self.powercontrol_job, 'cron', minute='0-59')
 
 		# Schedule the fetch_spot job to run once per day
-		self.sched.add_job(self.fetch_spot_job, 'cron', hour='17', minute='17')
+		self.sched.add_job(self.fetch_spot_job, 'cron', hour='14', minute='2')
 
 		# Schedule the logger job to run once per hour
 		self.sched.add_job(self.logger_job, 'cron', hour='0-23', minute='1')
@@ -139,16 +141,34 @@ class PowerControl:
 
 	def fetch_spot_job(self):
 		self.get_config()
+		self.get_prices()
 		log_file = open(self.config["statepath"] + "/logfile", "a")
 		log_file.write(str(datetime.now()))
-		log_file.write(" [Fetching spotfile]\n")
-		log_file.close()
+		log_file.write(" [Fetching spotfile]")
 		spot_prices_url = urlopen(self.config["url"])
-		data = json.loads(spot_prices_url.read())
-		if len(data) > 10:
+		try:
+			data = json.loads(spot_prices_url.read())
+		except:
+			log_file.write(" --> Error reading JSON data\n")
+			log_file.close()
+			# Reschedule the fetch_spot job to run in 5 minutes
+			retry = datetime.now(pytz.UTC) + timedelta(minutes=5)
+			self.sched.add_job(self.fetch_spot_job, 'date', run_date=retry)
+			return
+		if data[-1]["DateTime"] == self.prices[-1]["DateTime"]:
+			# If the loaded data is same as what already exists
+			log_file.write(" --> No new prices\n")
+			log_file.close()
+			# Reschedule the fetch_spot job to run in 15 minutes
+			retry = datetime.now(pytz.UTC) + timedelta(minutes=15)
+			self.sched.add_job(self.fetch_spot_job, 'date', run_date=retry)
+		else:
 			with open(self.config["statepath"] + "/spot_prices.json", "w") as outfile:
 				json.dump(data, outfile)
 				outfile.close()
+			log_file.write(" --> Taking new prices in use\n")
+			log_file.close()
+			self.get_prices()
 
 	def logger_job(self):
 		self.get_config()
