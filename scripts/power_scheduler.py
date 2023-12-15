@@ -46,9 +46,14 @@ class PowerControl:
 		config_file.close()
 
 	def get_prices(self):
-		price_file = open(self.config["statepath"] + "/spot_prices.json")
-		self.prices = json.load(price_file)
-		price_file.close()
+		try:
+			price_file = open(self.config["statepath"] + "/spot_prices.json")
+			self.prices = json.load(price_file)
+			price_file.close()
+		except:
+			self.prices = [{"DateTime": "2000-01-01T00:00:00+02:00",
+					"PriceNoTax": 0.0,
+					"PriceWithTax": 0.0}]
 
 	def get_seasonal_price(self, now):
 		if self.config["pricing"]["seasonal_pricing"]:
