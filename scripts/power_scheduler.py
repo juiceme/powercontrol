@@ -150,8 +150,8 @@ class PowerControl:
 		log_file = open(self.config["statepath"] + "/logfile", "a")
 		log_file.write(str(datetime.now()))
 		log_file.write(" [Fetching spotfile]")
-		spot_prices_url = urlopen(self.config["url"])
 		try:
+			spot_prices_url = urlopen(self.config["url"])
 			data = json.loads(spot_prices_url.read())
 		except:
 			log_file.write(" --> Error reading JSON data\n")
