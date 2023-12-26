@@ -25,8 +25,14 @@ class PowerControl:
 		self.config_file_name = filename
 		self.get_config()
 
+		log_file = open(self.config["statepath"] + "/logfile", "a")
+		log_file.write(str(datetime.now()))
+		log_file.write(" [Starting powercontrol]\n")
+		log_file.close()
+
 		# Before starting, always fetch the spot prices once
-		self.fetch_spot_job()
+		self.read_remote_url()
+		self.get_prices()
 
 		# Schedule the powercontrol job to run once each minute
 		self.sched.add_job(self.powercontrol_job, 'cron', minute='0-59')
@@ -36,6 +42,12 @@ class PowerControl:
 
 		# Schedule the logger job to run once per hour
 		self.sched.add_job(self.logger_job, 'cron', hour='0-23', minute='1')
+
+		# All set up
+		log_file = open(self.config["statepath"] + "/logfile", "a")
+		log_file.write(str(datetime.now()))
+		log_file.write(" [Started]\n")
+		log_file.close()
 
 		# Start the cronjobs
 		self.sched.start()
@@ -144,9 +156,7 @@ class PowerControl:
 			print(" [Charging --> OFF]")
 			os.system(self.config["binpath"] + "/charging_off.sh")
 
-	def fetch_spot_job(self):
-		self.get_config()
-		self.get_prices()
+	def read_remote_url(self):
 		log_file = open(self.config["statepath"] + "/logfile", "a")
 		log_file.write(str(datetime.now()))
 		log_file.write(" [Fetching spotfile]")
@@ -156,24 +166,37 @@ class PowerControl:
 		except:
 			log_file.write(" --> Error reading JSON data\n")
 			log_file.close()
+			return False, {}
+		with open(self.config["statepath"] + "/spot_prices.json", "w") as outfile:
+			json.dump(data, outfile)
+			outfile.close()
+		log_file.write(" --> Price file written\n")
+		log_file.close()
+		return True, data
+
+	def fetch_spot_job(self):
+		self.get_config()
+		self.get_prices()
+		log_file = open(self.config["statepath"] + "/logfile", "a")
+		log_file.write(str(datetime.now()))
+		log_file.write(" [Fetching spotfile]")
+		success, data = self.read_remote_url()
+		if not success:
 			# Reschedule the fetch_spot job to run in 5 minutes
+			log_file.write(" --> Rescheduling JSON fetching\n")
+			log_file.close()
 			retry = datetime.now(pytz.UTC) + timedelta(minutes=5)
 			self.sched.add_job(self.fetch_spot_job, 'date', run_date=retry)
-			return
-		if data[-1]["DateTime"] == self.prices[-1]["DateTime"]:
-			# If the loaded data is same as what already exists
-			log_file.write(" --> No new prices\n")
-			log_file.close()
-			# Reschedule the fetch_spot job to run in 15 minutes
-			retry = datetime.now(pytz.UTC) + timedelta(minutes=15)
-			self.sched.add_job(self.fetch_spot_job, 'date', run_date=retry)
 		else:
-			with open(self.config["statepath"] + "/spot_prices.json", "w") as outfile:
-				json.dump(data, outfile)
-				outfile.close()
-			log_file.write(" --> Taking new prices in use\n")
-			log_file.close()
-			self.get_prices()
+			if data[-1]["DateTime"] == self.prices[-1]["DateTime"]:
+				# Reschedule the fetch_spot job to run in 15 minutes
+				log_file.write(" --> No new prices, Rescheduling JSON fetching\n")
+				log_file.close()
+				retry = datetime.now(pytz.UTC) + timedelta(minutes=15)
+				self.sched.add_job(self.fetch_spot_job, 'date', run_date=retry)
+			else:
+				log_file.write(" --> Taking new prices in use\n")
+				log_file.close()
 
 	def logger_job(self):
 		self.get_config()
