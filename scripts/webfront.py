@@ -73,7 +73,7 @@ class WebServerWidget:
                 for n in self.prices:
                         dayline = parser.parse(n["DateTime"])
                         charging = "lightslategray"
-                        if (dayline.day == now.day and dayline.hour >= now.hour) or dayline.day > now.day or dayline.month > now.month:
+                        if (dayline.day == now.day and dayline.hour >= now.hour) or dayline.day > now.day or dayline.month > now.month or dayline.year > now.year:
                                 base_price, winter_day = self.get_winter_day(dayline)
                                 price = base_price + n["PriceWithTax"] * 100
                                 if price <= self.config["limits"]["charging"]:
