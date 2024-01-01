@@ -8,7 +8,7 @@ import plotly.express as px
 import time
 import json
 from dateutil import parser
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import sys
 
@@ -69,11 +69,12 @@ class WebServerWidget:
         def get_prices_from_now(self):
                 prices = []
                 colors = []
+                utc_now = datetime.now(timezone.utc)
                 now = datetime.now()
                 for n in self.prices:
                         dayline = parser.parse(n["DateTime"])
                         charging = "lightslategray"
-                        if (dayline.day == now.day and dayline.hour >= now.hour) or dayline.day > now.day or dayline.month > now.month or dayline.year > now.year:
+                        if (dayline.day == now.day and dayline.hour == now.hour) or dayline >= utc_now:
                                 base_price, winter_day = self.get_winter_day(dayline)
                                 price = base_price + n["PriceWithTax"] * 100
                                 if price <= self.config["limits"]["charging"]:
