@@ -3,8 +3,10 @@ INSTALL_ROOT = ./installroot
 USER_DIRECTORY ?= pi
 POWERCONTROL_UNIT = $(INSTALL_ROOT)/etc/systemd/system/powercontrol.service
 WEBFRONT_UNIT = $(INSTALL_ROOT)/etc/systemd/system/webfront.service
+POWERMEASUREMENT_UNIT = $(INSTALL_ROOT)/etc/systemd/system/powermeasurement.service
 SCHEDULER_APP = /home/$(USER_DIRECTORY)/.local/bin/power_scheduler.py
 WEBFRONT_APP = /home/$(USER_DIRECTORY)/.local/bin/webfront.py
+POWERMEAS_APP = /home/$(USER_DIRECTORY)/.local/bin/power_measurement.py
 CONFIG_FILE = /home/$(USER_DIRECTORY)/.local/state/power_config.json
 CONFIG_FILE_LOCATION = $(INSTALL_ROOT)/$(CONFIG_FILE)
 
@@ -20,6 +22,7 @@ systemd_units:
 	## install unit files
 	@ln -s /etc/systemd/system/powercontrol.service $(INSTALL_ROOT)/etc/systemd/system/multi-user.target.wants/powercontrol.service
 	@ln -s /etc/systemd/system/webfront.service $(INSTALL_ROOT)/etc/systemd/system/multi-user.target.wants/webfront.service
+	@ln -s /etc/systemd/system/powermeasurement.service $(INSTALL_ROOT)/etc/systemd/system/multi-user.target.wants/powermeasurement.service 
 	## Powercontrol unit
 	@echo "[Unit]" > $(POWERCONTROL_UNIT)
 	@echo "Description=Automatic powercontrol service" >> $(POWERCONTROL_UNIT)
@@ -44,6 +47,17 @@ systemd_units:
 	@echo "" >> $(WEBFRONT_UNIT)
 	@echo "[Install]" >> $(WEBFRONT_UNIT)
 	@echo "WantedBy=multi-user.target" >> $(WEBFRONT_UNIT)
+	## Powermeasurement unit
+	@echo "[Unit]" > $(POWERMEASUREMENT_UNIT)
+	@echo "Description=Automatic powermeasurement service" >> $(POWERMEASUREMENT_UNIT)
+	@echo "After=multi-user.target" >> $(POWERMEASUREMENT_UNIT)
+	@echo "" >> $(POWERMEASUREMENT_UNIT)
+	@echo "[Service]" >> $(POWERMEASUREMENT_UNIT)
+	@echo "Type=simple" >> $(POWERMEASUREMENT_UNIT)
+	@echo "ExecStart=/usr/bin/python3 $(POWERMEAS_APP) $(CONFIG_FILE)" >> $(POWERMEASUREMENT_UNIT)
+	@echo "" >> $(POWERMEASUREMENT_UNIT)
+	@echo "[Install]" >> $(POWERMEASUREMENT_UNIT)
+	@echo "WantedBy=multi-user.target" >> $(POWERMEASUREMENT_UNIT)
 
 config_file:
 	@mkdir -p $(INSTALL_ROOT)/home/$(USER_DIRECTORY)/.local/state/
@@ -62,6 +76,11 @@ config_file:
 	@echo "        \"floor\": 12.0," >> $(CONFIG_FILE_LOCATION)
 	@echo "        \"heat\": 8.0," >> $(CONFIG_FILE_LOCATION)
 	@echo "        \"charging\": 6.0" >> $(CONFIG_FILE_LOCATION)
+	@echo "    }," >> $(CONFIG_FILE_LOCATION)
+	@echo "    \"measurements\": {" >> $(CONFIG_FILE_LOCATION)
+	@echo "        \"enabled\": true," >> $(CONFIG_FILE_LOCATION)
+	@echo "        \"publisher\": \"localhost\"," >> $(CONFIG_FILE_LOCATION)
+	@echo "        \"topic\": \"shellypro3em-xxxxxxxxxxxx/events/rpc\"" >> $(CONFIG_FILE_LOCATION)
 	@echo "    }" >> $(CONFIG_FILE_LOCATION)
 	@echo "}" >> $(CONFIG_FILE_LOCATION)
 

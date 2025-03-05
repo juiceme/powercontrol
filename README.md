@@ -20,6 +20,10 @@ The physical device is a Raspberry Pi SBC fitted with relay-control hat. The spo
     plotly
     pandas
 
+### Furthermore, the power measurement module requires
+
+    paho.mqtt
+
 ### Building
 
     make clean
@@ -54,5 +58,10 @@ There is one configuration file, "~/.local/state/power_config.json". The default
             "floor" : 10.0,                                       # Price limit for floor heating [cents/kWh]
             "heat" : 5.0,                                         # Price limit for boiler booster [cents/kWh]
             "charging" : 5.0                                      # Price limit for EV Charger unit [cents/kWh]
+        },
+        "measurements": {
+        "enabled": true,                                          # Is power measurement by mqtt enabled
+        "publisher": "localhost",                                 # Publishing host
+        "topic": "shellypro3em-xxxxxxxxxxxx/events/rpc"           # Topic where to parse the measured power
         }
     }
