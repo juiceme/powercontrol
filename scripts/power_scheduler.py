@@ -19,6 +19,8 @@ class PowerControl:
 	config_file_name = ""
 	config = {}
 	prices = {}
+	power_per_minute = 0.0
+	power_per_hour = 0.0
 	sched = BlockingScheduler()
 
 	def __init__(self, filename):
@@ -66,6 +68,14 @@ class PowerControl:
 			self.prices = [{"DateTime": "2000-01-01T00:00:00+02:00",
 					"PriceNoTax": 0.0,
 					"PriceWithTax": 0.0}]
+
+	def get_power_consumption(self):
+		try:
+			power_file = open(self.config["statepath"] + "/power_per_minute")
+			self.power_per_minute = float(power_file.read())
+			power_file.close()
+		except:
+			self.power_per_minute = 0.0
 
 	def get_seasonal_price(self, now):
 		if self.config["pricing"]["seasonal_pricing"]:
@@ -124,6 +134,8 @@ class PowerControl:
 	def powercontrol_job(self):
 		self.get_config()
 		self.get_prices()
+		self.get_power_consumption()
+		self.power_per_hour = self.power_per_hour + self.power_per_minute
 		current_price, winter_day = self.get_current_price()
 		now = datetime.now()
 		print(now, end ="   ")
@@ -150,11 +162,12 @@ class PowerControl:
 				print(" [Floor --> OFF] ", end ="")
 				os.system(self.config["binpath"] + "/floor_off.sh")
 		if current_price < self.config['limits']['charging']:
-			print(" [Charging --> ON]")
+			print(" [Charging --> ON]", end ="")
 			os.system(self.config["binpath"] + "/charging_on.sh")
 		else:
-			print(" [Charging --> OFF]")
+			print(" [Charging --> OFF]", end ="")
 			os.system(self.config["binpath"] + "/charging_off.sh")
+		print("   %.2f Wh" % self.power_per_minute)
 
 	def read_remote_url(self):
 		self.write_to_log("[Fetching spotfile]")
@@ -205,9 +218,11 @@ class PowerControl:
 		else:
 			log_file.write(" [Floor --> OFF] ")
 		if os.path.exists(self.config["statepath"] + "/charging_on"):
-			log_file.write(" [Charging --> ON]\n")
+			log_file.write(" [Charging --> ON] ")
 		else:
-			log_file.write(" [Charging --> OFF]\n")
+			log_file.write(" [Charging --> OFF] ")
+		log_file.write(" %.2f Wh\n" % self.power_per_hour)
+		self.power_per_hour = 0.0
 		log_file.close()
 
 

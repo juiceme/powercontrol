@@ -25,6 +25,7 @@ def on_message_save_delta_power(client, userdata, message):
         global prev_power
         curr_power = 0.0
         avg_power = 0.0
+        filename = "/power_per_minute"
         payload = json.loads(message.payload)
         if "emdata:0" in payload["params"]:
                 if first == True:
@@ -34,10 +35,10 @@ def on_message_save_delta_power(client, userdata, message):
                         curr_power = payload["params"]["emdata:0"]["total_act"]
                         avg_power = curr_power - prev_power
                         prev_power = curr_power
-                        power_file = open(config["statepath"] + "/avg_power.tmp", "w")
+                        power_file = open(config["statepath"] + filename + ".tmp", "w")
                         power_file.write(str(avg_power))
                         power_file.close()
-                        os.replace(config["statepath"] + "/avg_power.tmp", config["statepath"] + "/avg_power")
+                        os.replace(config["statepath"] + filename + ".tmp", config["statepath"] + filename)
 
 subscribe.callback(on_message_save_delta_power, config["measurements"]["topic"], hostname=config["measurements"]["publisher"], userdata={})
 
