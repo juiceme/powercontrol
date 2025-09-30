@@ -20,7 +20,7 @@ class PowerControl:
 	config = {}
 	prices = {}
 	power_per_minute = 0.0
-	power_per_hour = 0.0
+	power_per_quarter = 0.0
 	sched = BlockingScheduler()
 
 	def __init__(self, filename):
@@ -39,8 +39,8 @@ class PowerControl:
 		# Schedule the fetch_spot job to run once per day
 		self.sched.add_job(self.fetch_spot_job, 'cron', hour='14', minute='2')
 
-		# Schedule the logger job to run once per hour
-		self.sched.add_job(self.logger_job, 'cron', hour='0-23', minute='1')
+		# Schedule the logger job to run every 15 minutes
+		self.sched.add_job(self.logger_job, 'cron', hour='0-23', minute='14,29,44,59')
 
 		# All set up
 		self.write_to_log("[Started]")
@@ -88,12 +88,19 @@ class PowerControl:
 
 	def get_current_price(self):
 		now = datetime.now()
+		price, winter_day = self.get_seasonal_price(now)
 		for n in self.prices:
 			item = parser.parse(n["DateTime"])
 			if item.day == now.day and item.hour == now.hour:
-				price, winter_day = self.get_seasonal_price(now)
-				return n["PriceWithTax"] * 100 + price, winter_day
-			# If the hourly price is not found, return quite high price just in case
+				if item.minute == 0 and now.minute >= 0 and now.minute < 15:
+					return n["PriceWithTax"] * 100 + price, winter_day
+				if item.minute == 15 and now.minute >= 15 and now.minute < 30:
+					return n["PriceWithTax"] * 100 + price, winter_day
+				if item.minute == 30 and now.minute >= 30 and now.minute < 45:
+					return n["PriceWithTax"] * 100 + price, winter_day
+				if item.minute == 45:
+					return n["PriceWithTax"] * 100 + price, winter_day
+		# If the hourly price is not found, return quite high price just in case
 		return 100.0, False
 
 	def check_current_override(self):
@@ -135,7 +142,7 @@ class PowerControl:
 		self.get_config()
 		self.get_prices()
 		self.get_power_consumption()
-		self.power_per_hour = self.power_per_hour + self.power_per_minute
+		self.power_per_quarter = self.power_per_quarter + self.power_per_minute
 		current_price, winter_day = self.get_current_price()
 		now = datetime.now()
 		print(now, end ="   ")
@@ -221,8 +228,8 @@ class PowerControl:
 			log_file.write(" [Charging --> ON] ")
 		else:
 			log_file.write(" [Charging --> OFF] ")
-		log_file.write(" %.2f Wh\n" % self.power_per_hour)
-		self.power_per_hour = 0.0
+		log_file.write(" %.2f Wh\n" % self.power_per_quarter)
+		self.power_per_quarter = 0.0
 		log_file.close()
 
 
